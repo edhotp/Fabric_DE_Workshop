@@ -17,27 +17,48 @@ You will learn how to:
 
 ## Architecture
 
-The solution follows this high-level flow:
+```mermaid
+flowchart TD
+    subgraph Sources["🔌 Data Sources"]
+        ABS["Azure Blob Storage\n(Parquet Files)"]
+        CSV["CSV Files\n(OneDrive Upload)"]
+    end
 
-```
-Azure Blob Storage ──► Data Factory Pipeline ──► Lakehouse (Files)
-                                                      │
-                                                      ▼
-                                              Spark Notebooks
-                                              (Transform & Load)
-                                                      │
-                                                      ▼
-                                              Lakehouse (Delta Tables)
-                                              Bronze → Silver → Gold
-                                                      │
-                                                      ▼
-                                              SQL Analytics Endpoint
-                                                      │
-                                                      ▼
-                                              Semantic Model (Direct Lake)
-                                                      │
-                                                      ▼
-                                              Power BI Reports
+    subgraph Ingestion["📥 Ingestion"]
+        Pipeline["Data Factory Pipeline\n(Copy Data Activity)"]
+        Dataflow["Dataflow Gen2"]
+    end
+
+    subgraph Lakehouse["🏠 Lakehouse (OneLake)"]
+        Files["Files Section\n(Raw / Landing Zone)"]
+        subgraph Medallion["Medallion Architecture"]
+            Bronze["🥉 Bronze\nRaw Delta Tables"]
+            Silver["🥈 Silver\nValidated & Deduplicated"]
+            Gold["🥇 Gold\nFact & Dimension Tables\n(Star Schema)"]
+        end
+    end
+
+    subgraph Transform["⚙️ Transform & Load"]
+        Spark["Apache Spark Notebooks\n(PySpark & Spark SQL)"]
+    end
+
+    subgraph Consume["📊 Consume"]
+        SQL["SQL Analytics Endpoint\n(TDS)"]
+        Semantic["Semantic Model\n(Direct Lake)"]
+        PBI["Power BI Reports"]
+    end
+
+    ABS -->|"Tutorial 4"| Pipeline
+    CSV -->|"Tutorial 3"| Dataflow
+    Pipeline --> Files
+    Dataflow --> Bronze
+    Files -->|"Tutorial 5"| Spark
+    Spark --> Bronze
+    Bronze --> Silver
+    Silver --> Gold
+    Gold --> SQL
+    SQL --> Semantic
+    Semantic --> PBI
 ```
 
 ## Tutorial Contents
